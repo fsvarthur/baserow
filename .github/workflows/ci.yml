@@ -399,6 +399,7 @@ jobs:
         with:
           files: reports/report.xml
           check_name: Backend Tests (Group ${{ matrix.group }})
+          comment_mode: off
 
   test-frontend:
     name: Web-Frontend Tests (Shard ${{ matrix.shard }})
@@ -451,6 +452,7 @@ jobs:
         with:
           files: reports/junit.xml
           check_name: Web-Frontend Tests (Shard ${{ matrix.shard }})
+          comment_mode: off
 
   test-zapier:
     name: Zapier Integration Tests
@@ -518,8 +520,7 @@ jobs:
     name: E2E Tests (Shard ${{ matrix.shard }})
     timeout-minutes: 60
     runs-on: ubuntu-latest
-    # Only run E2E tests on PRs, not on develop/master branches
-    if: github.event_name == 'pull_request'
+    if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true' || needs.detect-changes.outputs.dockerfiles == 'true' || github.ref_name == 'develop' || github.ref_name == 'master'
     needs:
       - build-backend
       - build-frontend
@@ -678,7 +679,6 @@ jobs:
   collect-e2e-reports:
     name: Collect E2E Test Reports
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && always()
     needs: [test-e2e]
     permissions:
       contents: read
