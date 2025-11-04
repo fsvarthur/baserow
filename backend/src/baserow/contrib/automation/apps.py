@@ -20,6 +20,7 @@ class AutomationConfig(AppConfig):
             UpdateAutomationNodeActionType,
         )
         from baserow.contrib.automation.nodes.node_types import (
+            AIAgentActionNodeType,
             CoreHttpRequestNodeType,
             CoreHTTPTriggerNodeType,
             CoreIteratorNodeType,
@@ -167,6 +168,7 @@ class AutomationConfig(AppConfig):
             )
             automation_node_type_registry.register(CorePeriodicTriggerNodeType())
             automation_node_type_registry.register(CoreHTTPTriggerNodeType())
+            automation_node_type_registry.register(AIAgentActionNodeType())
 
             from baserow.core.trash.registries import trash_operation_type_registry
 

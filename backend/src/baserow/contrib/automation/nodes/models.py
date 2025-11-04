@@ -224,3 +224,7 @@ class CoreRouterActionNode(AutomationActionNode):
 
 class CoreIteratorActionNode(AutomationActionNode):
     ...
+
+
+class AIAgentActionNode(AutomationActionNode):
+    ...
