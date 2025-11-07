@@ -75,7 +75,17 @@
             {{ $t('workflowNode.moreReplace') }}
           </a>
         </li>
-        <li class="context__menu-item">
+        <li v-if="canBeDuplicated" class="context__menu-item">
+          <a
+            role="button"
+            class="context__menu-item-link"
+            @click="emit('duplicate-node', node.id)"
+          >
+            <i class="context__menu-item-icon iconoir-copy"></i>
+            {{ $t('workflowNode.moreDuplicate') }}
+          </a>
+        </li>
+        <li class="context__menu-item context__menu-item--with-separator">
           <a
             :key="getDeleteErrorMessage"
             v-tooltip="getDeleteErrorMessage || null"
@@ -131,7 +141,12 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['remove-node', 'replace-node', 'select-node'])
+const emit = defineEmits([
+  'remove-node',
+  'replace-node',
+  'select-node',
+  'duplicate-node',
+])
 
 const isDragging = ref(false)
 
@@ -275,6 +290,13 @@ const getDataBeforeLabel = computed(() => {
     node: referenceNode,
     position,
     output,
+  })
+})
+
+const canBeDuplicated = computed(() => {
+  return nodeType.value.isDuplicable({
+    workflow: workflow.value,
+    node: props.node,
   })
 })
 </script>

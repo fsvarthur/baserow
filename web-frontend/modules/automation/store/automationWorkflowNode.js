@@ -172,6 +172,7 @@ const actions = {
       type,
       workflow: workflow.id,
     })
+
     commit('ADD_ITEM', { workflow, node: tempNode })
 
     const initialGraph = clone(workflow.graph)
@@ -404,6 +405,71 @@ const actions = {
         output: previousOutput,
       })
 
+      throw error
+    }
+  },
+  async duplicate({ commit, dispatch, getters }, { workflow, nodeId }) {
+    const nodeToDuplicate = getters.findById(workflow, nodeId)
+    if (!nodeToDuplicate) {
+      return
+    }
+
+    // Get the node type to properly initialize the node
+    const nodeType = this.$registry.get('node', nodeToDuplicate.type)
+
+    // Use getDefaultValues like in create, but override with duplicated node's data
+    const tempNode = nodeType.getDefaultValues({
+      ...nodeToDuplicate, // Copy all properties from the original
+      id: uuid(), // But give it a new ID
+      workflow: workflow.id,
+    })
+
+    commit('ADD_ITEM', { workflow, node: tempNode })
+
+    const initialGraph = clone(workflow.graph)
+
+    // Insert the duplicated node after the original node using 'south' position
+    await dispatch('graphInsert', {
+      workflow,
+      node: tempNode,
+      referenceNode: nodeToDuplicate,
+      position: 'south',
+      output: '', // Default output for creating after a node
+    })
+
+    try {
+      const { data: node } = await AutomationWorkflowNodeService(
+        this.$client
+      ).duplicate(nodeId)
+
+      commit('ADD_ITEM', { workflow, node })
+
+      await dispatch('graphReplace', {
+        workflow,
+        nodeToReplace: tempNode,
+        newNode: node,
+      })
+
+      // Remove temp node and add real one
+      commit('DELETE_ITEM', { workflow, nodeId: tempNode.id })
+
+      setTimeout(() => {
+        const populatedNode = getters.findById(workflow, node.id)
+        dispatch('select', { workflow, node: populatedNode })
+      })
+
+      return node
+    } catch (error) {
+      // If API fails, restore the initial graph
+      await dispatch(
+        'automationWorkflow/forceUpdate',
+        {
+          workflow,
+          values: { graph: initialGraph },
+        },
+        { root: true }
+      )
+      commit('DELETE_ITEM', { workflow, nodeId: tempNode.id })
       throw error
     }
   },
