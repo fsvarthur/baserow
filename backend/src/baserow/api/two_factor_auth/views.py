@@ -13,6 +13,7 @@ from baserow.api.decorators import (
 )
 from baserow.api.schemas import get_error_schema
 from baserow.api.two_factor_auth.errors import (
+    ERROR_RATE_LIMIT_EXCEEDED,
     ERROR_TWO_FACTOR_AUTH_ALREADY_CONFIGURED,
     ERROR_TWO_FACTOR_AUTH_CANNOT_BE_CONFIGURED,
     ERROR_TWO_FACTOR_AUTH_NOT_CONFIGURED,
@@ -27,7 +28,7 @@ from baserow.api.two_factor_auth.serializers import (
     VerifyTOTPSerializer,
 )
 from baserow.api.two_factor_auth.tokens import Require2faToken
-from baserow.api.user.schemas import create_user_response_schema
+from baserow.api.user.schemas import authenticated_user_response_schema
 from baserow.api.user.serializers import log_in_user
 from baserow.api.utils import DiscriminatorCustomFieldsMappingSerializer
 from baserow.core.models import User
@@ -48,6 +49,8 @@ from baserow.core.two_factor_auth.registries import (
     TOTPAuthProviderType,
     two_factor_auth_type_registry,
 )
+from baserow.throttling import RateLimitExceededException, rate_limit
+from baserow.throttling_types import RateLimit
 
 
 class ConfigureTwoFactorAuthView(APIView):
@@ -181,7 +184,7 @@ class VerifyTOTPAuthView(APIView):
         description=("Verifies TOTP two-factor authentication"),
         request=VerifyTOTPSerializer,
         responses={
-            200: create_user_response_schema,
+            200: authenticated_user_response_schema,
             400: get_error_schema(
                 [
                     "ERROR_REQUEST_BODY_VALIDATION",
@@ -189,12 +192,14 @@ class VerifyTOTPAuthView(APIView):
             ),
             401: get_error_schema(["ERROR_TWO_FACTOR_AUTH_VERIFICATION_FAILED"]),
             404: get_error_schema(["ERROR_TWO_FACTOR_AUTH_TYPE_DOES_NOT_EXIST"]),
+            429: get_error_schema(["ERROR_RATE_LIMIT_EXCEEDED"]),
         },
     )
     @map_exceptions(
         {
             TwoFactorAuthTypeDoesNotExist: ERROR_TWO_FACTOR_AUTH_TYPE_DOES_NOT_EXIST,
             VerificationFailed: ERROR_TWO_FACTOR_AUTH_VERIFICATION_FAILED,
+            RateLimitExceededException: ERROR_RATE_LIMIT_EXCEEDED,
         }
     )
     @validate_body(VerifyTOTPSerializer, return_validated=True)
@@ -204,7 +209,14 @@ class VerifyTOTPAuthView(APIView):
         Verifies TOTP two-factor authentication.
         """
 
-        TwoFactorAuthHandler().verify(TOTPAuthProviderType.type, **data)
+        def verify():
+            TwoFactorAuthHandler().verify(TOTPAuthProviderType.type, **data)
+
+        rate_limit(
+            rate=RateLimit.from_string("10/m"),
+            key=f"two_fa_verify:totp:{data.get('email', '')}",
+            raise_exception=True,
+        )(verify)()
 
         user = User.objects.filter(email=data["email"]).first()
         return_data = log_in_user(request, user)
