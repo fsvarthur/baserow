@@ -175,7 +175,7 @@ from .dependencies.exceptions import (
 from .dependencies.handler import FieldDependants, FieldDependencyHandler
 from .dependencies.models import FieldDependency
 from .dependencies.types import FieldDependencies
-from .dependencies.update_collector import FieldUpdateCollector
+from .dependencies.update_collector import DependencyContext, FieldUpdateCollector
 from .exceptions import (
     AllProvidedCollaboratorIdsMustBeValidUsers,
     AllProvidedMultipleSelectValuesMustBeSelectOption,
@@ -3582,6 +3582,7 @@ class LinkRowFieldType(
         update_collector: FieldUpdateCollector,
         field_cache: "FieldCache",
         via_path_to_starting_table: List["LinkRowField"],
+        dependency_context: DependencyContext,
     ):
         update_collector.add_field_which_has_changed(
             field, via_path_to_starting_table, send_field_updated_signal=False
@@ -3592,6 +3593,7 @@ class LinkRowFieldType(
             update_collector,
             field_cache,
             via_path_to_starting_table,
+            dependency_context,
         )
 
     def field_dependency_updated(
@@ -5697,6 +5699,7 @@ class FormulaFieldType(FormulaFieldTypeArrayFilterSupport, ReadOnlyFieldType):
         update_collector: FieldUpdateCollector,
         field_cache: "FieldCache",
         via_path_to_starting_table: Optional[List[LinkRowField]],
+        dependency_context: DependencyContext,
     ):
         self._update_field_values(
             field, update_collector, field_cache, via_path_to_starting_table
@@ -5708,6 +5711,7 @@ class FormulaFieldType(FormulaFieldTypeArrayFilterSupport, ReadOnlyFieldType):
             update_collector,
             field_cache,
             via_path_to_starting_table,
+            dependency_context,
         )
 
     def _update_field_values(

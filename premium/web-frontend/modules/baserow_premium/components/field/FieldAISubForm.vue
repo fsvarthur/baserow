@@ -60,6 +60,23 @@
       </template>
     </FormGroup>
 
+    <FormGroup small-label>
+      <template #label>
+        {{ $t('fieldAISubForm.autoUpdate') }}
+        <HelpIcon
+          :tooltip="$t('fieldAISubForm.autoUpdateHelp')"
+          :tooltip-content-classes="['tooltip__content--expandable']"
+        />
+      </template>
+      <div class="control" :style="{ marginTop: '4px' }">
+        <div class="control__elements">
+          <Checkbox v-model="v$.values.ai_auto_update.$model">{{
+            $t('fieldAISubForm.autoUpdateDescription')
+          }}</Checkbox>
+        </div>
+      </div>
+    </FormGroup>
+
     <FormGroup
       small-label
       :label="$t('fieldAISubForm.prompt')"
@@ -112,11 +129,17 @@ export default {
   },
   data() {
     return {
-      allowedValues: ['ai_prompt', 'ai_file_field_id', 'ai_output_type'],
+      allowedValues: [
+        'ai_prompt',
+        'ai_file_field_id',
+        'ai_output_type',
+        'ai_auto_update',
+      ],
       values: {
         ai_prompt: { formula: '', mode: 'simple' },
         ai_output_type: TextAIFieldOutputType.getType(),
         ai_file_field_id: null,
+        ai_auto_update: false,
       },
       fileFieldSupported: false,
       localMode: 'simple',
@@ -251,6 +274,7 @@ export default {
         ai_prompt: { formula: { required } },
         ai_file_field_id: {},
         ai_output_type: {},
+        ai_auto_update: {},
       },
     }
   },
