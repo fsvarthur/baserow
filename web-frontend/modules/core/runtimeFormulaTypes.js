@@ -978,7 +978,7 @@ export class RuntimeRound extends RuntimeFormulaFunction {
       decimalPlaces = Math.max(args[1], 0)
     }
 
-    return args[0].toFixed(decimalPlaces)
+    return Number(args[0].toFixed(decimalPlaces))
   }
 
   getDescription() {
@@ -1468,8 +1468,8 @@ export class RuntimeRandomInt extends RuntimeFormulaFunction {
 
   get args() {
     return [
-      new NumberBaserowRuntimeFormulaArgumentType(),
-      new NumberBaserowRuntimeFormulaArgumentType(),
+      new NumberBaserowRuntimeFormulaArgumentType({ castToInt: true }),
+      new NumberBaserowRuntimeFormulaArgumentType({ castToInt: true }),
     ]
   }
 
@@ -1509,8 +1509,8 @@ export class RuntimeRandomFloat extends RuntimeFormulaFunction {
 
   get args() {
     return [
-      new NumberBaserowRuntimeFormulaArgumentType(),
-      new NumberBaserowRuntimeFormulaArgumentType(),
+      new NumberBaserowRuntimeFormulaArgumentType({ castToFloat: true }),
+      new NumberBaserowRuntimeFormulaArgumentType({ castToFloat: true }),
     ]
   }
 
@@ -1656,7 +1656,7 @@ export class RuntimeAnd extends RuntimeFormulaFunction {
   }
 
   static getFormulaType() {
-    return FORMULA_TYPE.FUNCTION
+    return FORMULA_TYPE.OPERATOR
   }
 
   static getCategoryType() {
@@ -1699,7 +1699,7 @@ export class RuntimeOr extends RuntimeFormulaFunction {
   }
 
   static getFormulaType() {
-    return FORMULA_TYPE.FUNCTION
+    return FORMULA_TYPE.OPERATOR
   }
 
   static getCategoryType() {

@@ -39,6 +39,7 @@ export class NumberBaserowRuntimeFormulaArgumentType extends BaserowRuntimeFormu
   constructor(options = {}) {
     super(options)
     this.castToInt = options.castToInt ?? false
+    this.castToFloat = options.castToFloat ?? false
   }
 
   test(value) {
@@ -46,12 +47,22 @@ export class NumberBaserowRuntimeFormulaArgumentType extends BaserowRuntimeFormu
       return false
     }
 
-    return !isNaN(value)
+    try {
+      ensureNumeric(value)
+      return true
+    } catch (e) {
+      return false
+    }
   }
 
   parse(value) {
     const val = ensureNumeric(value, { allowNull: true })
-    return this.castToInt ? Math.trunc(val) : val
+    if (this.castToInt) {
+      return Math.trunc(val)
+    } else if (this.castToFloat) {
+      return parseFloat(val)
+    }
+    return val
   }
 }
 
@@ -104,7 +115,12 @@ export class ObjectBaserowRuntimeFormulaArgumentType extends BaserowRuntimeFormu
 
 export class BooleanBaserowRuntimeFormulaArgumentType extends BaserowRuntimeFormulaArgumentType {
   test(value) {
-    return typeof value === 'boolean'
+    try {
+      ensureBoolean(value, { useStrict: false })
+      return true
+    } catch (e) {
+      return false
+    }
   }
 
   parse(value) {
